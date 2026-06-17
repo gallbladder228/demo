@@ -1,0 +1,558 @@
+body{
+    margin:0;
+    font-family:Arial, sans-serif;
+    background:#f2f2f2;
+}
+
+.container{
+    width:600px;
+    margin:50px auto;
+    background:white;
+    padding:30px;
+    border-radius:10px;
+}
+
+h1{
+    text-align:center;
+}
+
+input,
+select,
+textarea{
+    width:100%;
+    padding:10px;
+    margin-bottom:15px;
+    box-sizing:border-box;
+}
+
+button{
+    width:100%;
+    padding:10px;
+    cursor:pointer;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th,
+td{
+    border:1px solid #ccc;
+    padding:10px;
+}
+
+.copy-code {
+    color: blue;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+
+/* config_db.php */
+<?php
+
+$host = "localhost";
+$dbname = "demo";
+$user = "root";
+$password = "";
+
+try {
+    $pdo = new PDO(
+        "mysql:host=$host;dbname=$dbname;charset=utf8",
+        $user,
+        $password
+    );
+
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+} catch(PDOException $e) {
+    die("Ошибка подключения: " . $e->getMessage());
+}
+
+/* login.php *////////////////////////////////////////////////////////////////////
+<?php
+session_start();
+require 'config/db.php';
+
+if(isset($_POST['login_btn'])){
+
+    $login = $_POST['login'];
+    $password = $_POST['password'];
+
+    $stmt = $pdo->prepare(
+        "SELECT * FROM users WHERE login=?"
+    );
+
+    $stmt->execute([$login]);
+
+    $user = $stmt->fetch();
+
+    if($user && password_verify($password, $user['password'])){
+
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['fio'] = $user['fio'];
+
+        header("Location: profile.php");
+        exit;
+    }
+
+    $error = "Неверный логин или пароль";
+}
+?>
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Авторизация</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+
+<div class="container">
+
+    <h1>Авторизация</h1>
+
+    <?php if(isset($error)): ?>
+        <p><?= $error ?></p>
+    <?php endif; ?>
+
+    <form method="POST">
+
+        <input
+            type="text"
+            name="login"
+            placeholder="Логин"
+            required
+        >
+
+        <input
+            type="password"
+            name="password"
+            placeholder="Пароль"
+            required
+        >
+
+        <button name="login_btn">
+            Войти
+        </button>
+
+    </form>
+
+    <a href="register.php">
+        Зарегистрироваться
+    </a>
+
+</div>
+
+</body>
+</html>
+/* register.php *////////////////////////////////////////////////////////////////
+<?php
+require 'config/db.php';
+
+if(isset($_POST['register'])){
+
+    $fio = $_POST['fio'];
+    $phone = $_POST['phone'];
+    $email = $_POST['email'];
+    $login = $_POST['login'];
+    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+
+    $sql = "INSERT INTO users(fio, phone, email, login, password)
+            VALUES (?, ?, ?, ?, ?)";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([
+        $fio,
+        $phone,
+        $email,
+        $login,
+        $password
+    ]);
+
+    header("Location: login.php");
+}
+?>
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Регистрация</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="container">
+
+    <h1>Регистрация</h1>
+
+    <form method="POST">
+
+        <input
+            type="text"
+            name="fio"
+            placeholder="ФИО"
+            required
+        >
+
+        <input
+            type="tel"
+            name="phone"
+            placeholder="Телефон"
+            required
+        >
+
+        <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            required
+        >
+
+        <input
+            type="text"
+            name="login"
+            placeholder="Логин"
+            required
+        >
+
+        <input
+            type="password"
+            name="password"
+            placeholder="Пароль"
+            required
+        >
+
+        <button name="register">
+            Зарегистрироваться
+        </button>
+
+    </form>
+
+    <a href="login.php">
+        Уже есть аккаунт?
+    </a>
+
+</div>
+
+</body>
+</html>
+
+/* profile.php *//////////////////////////////////////////////////////////////////
+<?php
+session_start();
+
+if(!isset($_SESSION['user_id'])){
+    header("Location: login.php");
+    exit;
+}
+?>
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Личный кабинет</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="container">
+
+    <h1>
+        Добро пожаловать,
+        <?= $_SESSION['fio'] ?>
+    </h1>
+
+    <p>
+        Выберите действие:
+    </p>
+
+    <a href="create.php">
+        Создать заявку
+    </a>
+
+    <br><br>
+
+    <a href="my_requests.php">
+        Мои заявки
+    </a>
+
+    <br><br>
+
+    <a href="logout.php">
+        Выйти
+    </a>
+
+</div>
+
+</body>
+</html>
+/* logout.php *//////////////////////////////////////////////////////////////////
+<?php
+
+session_start();
+
+session_destroy();
+
+header("Location: login.php");
+/* admin_login.php *//////////////////////////////////////////////////////////////////
+<?php
+
+session_start();
+
+if(isset($_POST['login_btn'])){
+
+    $login = $_POST['login'];
+    $password = $_POST['password'];
+
+
+    if($login == "adminka" && $password == "password"){
+
+        $_SESSION['admin'] = true;
+
+        header("Location: admin.php");
+        exit;
+    }
+
+    $error = "Неверные данные";
+}
+
+?>
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Администратор</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+<div class="container">
+<h1>Вход администратора</h1>
+
+<?php if(isset($error)): ?>
+
+<p><?= $error ?></p>
+
+<?php endif; ?>
+
+<form method="POST">
+
+<input 
+type="text"
+name="login"
+placeholder="Логин"
+required>
+
+
+<input
+type="password"
+name="password"
+placeholder="Пароль"
+required>
+
+
+<button name="login_btn">
+Войти
+</button>
+</form>
+</div>
+</body>
+</html>
+/* admin.php *//////////////////////////////////////////////////////////////////
+<?php
+
+session_start();
+
+require 'config/db.php';
+
+
+if(!isset($_SESSION['admin'])){
+
+    header("Location: admin_login.php");
+    exit;
+
+}
+
+$sql = "
+SELECT 
+requests.*,
+users.fio,
+users.phone,
+users.email
+
+FROM requests
+
+JOIN users 
+ON requests.user_id = users.id
+
+ORDER BY requests.id DESC
+";
+
+$stmt = $pdo->query($sql);
+
+$requests = $stmt->fetchAll();
+
+?>
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Админ-панель</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Админ-панель</h1>
+
+<table>
+<tr>
+
+<th>ID</th>
+<th>ФИО</th>
+<th>Телефон</th>
+<th>Услуга</th>
+<th>Адрес</th>
+<th>Дата</th>
+<th>Статус</th>
+<th>Действия</th>
+
+</tr>
+<?php foreach($requests as $item): ?>
+<tr>
+
+
+<td>
+<?= $item['id'] ?>
+</td>
+
+
+<td>
+<?= $item['fio'] ?>
+</td>
+
+
+<td>
+<?= $item['phone'] ?>
+</td>
+
+
+<td>
+<?= $item['service'] ?>
+</td>
+
+
+<td>
+<?= $item['address'] ?>
+</td>
+
+
+<td>
+<?= $item['request_date'] ?>
+</td>
+
+
+<td>
+<?= $item['status'] ?>
+</td>
+
+
+<td>
+<a href="update_status.php?id=<?= $item['id'] ?>&status=Выполнена">
+Выполнить
+</a>
+
+
+<br>
+<a href="update_status.php?id=<?= $item['id'] ?>&status=Отменена">
+Отменить
+</a>
+
+</td>
+</tr>
+
+<?php endforeach; ?>
+
+</table>
+</div>
+</body>
+</html>
+/* update_status.php *//////////////////////////////////////////////////////////////////
+<?php
+
+session_start();
+
+require 'config/db.php';
+
+
+if(!isset($_SESSION['admin'])){
+
+header("Location: admin_login.php");
+exit;
+
+}
+
+$id = $_GET['id'];
+
+$status = $_GET['status'];
+
+
+$stmt = $pdo->prepare(
+"UPDATE requests
+ SET status=?
+ WHERE id=?"
+);
+
+
+$stmt->execute([
+$status,
+$id
+]);
+
+
+header("Location: admin.php");
+/* data base *//////////////////////////////////////////////////////////////////
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    fio VARCHAR(255) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    login VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE requests (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+
+    user_id INT NOT NULL,
+
+    service VARCHAR(255) NOT NULL,
+
+    address VARCHAR(255) NOT NULL,
+
+    contact VARCHAR(255) NOT NULL,
+
+    request_date DATE NOT NULL,
+
+    request_time TIME NOT NULL,
+
+    payment VARCHAR(50) NOT NULL,
+
+    status VARCHAR(50) DEFAULT 'Новая',
+
+    reject_reason TEXT,
+
+    FOREIGN KEY (user_id)
+    REFERENCES users(id)
+);
